@@ -1,37 +1,28 @@
 const express = require("express");
 const cors = require("cors");
+const OpenAI = require("openai");
 
 const app = express();
 
 app.use(cors());
 app.use(express.json());
 
+// ================= ROOT =================
 app.get("/", (req, res) => {
   res.send("Task backend is running 🚀");
 });
 
-// IMPORTANT POUR RENDER
-const PORT = process.env.PORT || 10000;
-
-app.listen(PORT, () => {
-  console.log("Server running on port " + PORT);
-});
-app.post("/chatbot", async (req, res) => {
-  res.json({ reply: "test chatbot OK" });
-});
-app.get("/", (req, res) => {
-  res.send("HOME OK");
-});
-
+// ================= TEST =================
 app.get("/test", (req, res) => {
   res.send("TEST OK WORKING");
 });
-const OpenAI = require("openai");
 
+// ================= OPENAI =================
 const openai = new OpenAI({
   apiKey: process.env.OPENAI_API_KEY,
 });
 
+// ================= CHATBOT =================
 app.post("/chatbot", async (req, res) => {
   try {
     const { message } = req.body;
@@ -41,7 +32,8 @@ app.post("/chatbot", async (req, res) => {
       messages: [
         {
           role: "system",
-          content: "Tu es un assistant technique pour des techniciens de maintenance. Donne des réponses simples, claires et pratiques.",
+          content:
+            "Tu es un assistant technique pour des techniciens de maintenance. Donne des réponses simples et pratiques.",
         },
         {
           role: "user",
@@ -53,9 +45,15 @@ app.post("/chatbot", async (req, res) => {
     res.json({
       reply: response.choices[0].message.content,
     });
-
   } catch (err) {
     console.log(err);
     res.status(500).json({ error: "Chatbot error" });
   }
+});
+
+// ================= START SERVER =================
+const PORT = process.env.PORT || 10000;
+
+app.listen(PORT, () => {
+  console.log("Server running on port " + PORT);
 });
