@@ -17,11 +17,6 @@ app.get("/test", (req, res) => {
   res.send("TEST OK WORKING");
 });
 
-// ================= OPENAI =================
-const openai = new OpenAI({
-  apiKey: process.env.OPENAI_API_KEY,
-});
-
 // ================= CHATBOT =================
 app.post("/chatbot", async (req, res) => {
   try {
@@ -56,4 +51,46 @@ const PORT = process.env.PORT || 10000;
 
 app.listen(PORT, () => {
   console.log("Server running on port " + PORT);
+});
+const OpenAI = require("openai");
+
+const openai = new OpenAI({
+  apiKey: process.env.OPENAI_API_KEY,
+});
+
+app.post("/chatbot", async (req, res) => {
+  try {
+    const { message } = req.body;
+
+    if (!message) {
+      return res.status(400).json({ error: "Message is required" });
+    }
+
+    const response = await openai.chat.completions.create({
+      model: "gpt-4o-mini",
+      messages: [
+        {
+          role: "system",
+          content:
+            "Tu es un assistant technique pour techniciens de maintenance.",
+        },
+        {
+          role: "user",
+          content: message,
+        },
+      ],
+    });
+
+    res.json({
+      reply: response.choices[0].message.content,
+    });
+
+  } catch (error) {
+    console.log("OPENAI ERROR:", error);
+
+    res.status(500).json({
+      error: "Chatbot error",
+      details: error.message,
+    });
+  }
 });
