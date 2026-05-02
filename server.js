@@ -1,8 +1,6 @@
-console.log("SERVER STARTING...");
-
 const express = require("express");
 const cors = require("cors");
-const OpenAI = require("openai");
+const axios = require("axios");
 
 const app = express();
 
@@ -19,12 +17,7 @@ app.get("/test", (req, res) => {
   res.send("TEST OK WORKING");
 });
 
-// ================= OPENAI INIT =================
-const openai = new OpenAI({
-  apiKey: process.env.OPENAI_API_KEY,
-});
-
-// ================= CHATBOT =================
+// ================= CHATBOT (FREE) =================
 app.post("/chatbot", async (req, res) => {
   try {
     const { message } = req.body;
@@ -33,36 +26,32 @@ app.post("/chatbot", async (req, res) => {
       return res.status(400).json({ error: "Message is required" });
     }
 
-    const response = await openai.chat.completions.create({
-      model: "gpt-4o-mini",
-      messages: [
-        {
-          role: "system",
-          content:
-            "Tu es un assistant technique pour techniciens de maintenance. Donne des réponses simples et pratiques.",
+    const response = await axios.post(
+      "https://api-inference.huggingface.co/models/microsoft/DialoGPT-medium",
+      {
+        inputs: message,
+      },
+      {
+        headers: {
+          Authorization: `Bearer ${process.env.HF_TOKEN}`,
         },
-        {
-          role: "user",
-          content: message,
-        },
-      ],
-    });
+      }
+    );
 
-    res.json({
-      reply: response.choices[0].message.content,
-    });
+    const reply =
+      response.data.generated_text ||
+      response.data[0]?.generated_text ||
+      "No response";
+
+    res.json({ reply });
 
   } catch (error) {
-    console.log("OPENAI ERROR:", error);
-
-    res.status(500).json({
-      error: "Chatbot error",
-      details: error.message,
-    });
+    console.log("HF ERROR:", error.message);
+    res.status(500).json({ error: "Chatbot error (HF)" });
   }
 });
 
-// ================= START SERVER =================
+// ================= SERVER =================
 const PORT = process.env.PORT || 10000;
 
 app.listen(PORT, () => {
