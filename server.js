@@ -27,16 +27,15 @@ app.post("/chatbot", async (req, res) => {
     }
 
     const response = await axios.post(
-      "https://api-inference.huggingface.co/models/facebook/blenderbot-400M-distill",
-      {
-        inputs: message,
-      },
-      {
-        headers: {
-          Authorization: `Bearer ${process.env.HF_TOKEN}`,
-        },
-      }
-    );
+  "https://api-inference.huggingface.co/models/facebook/blenderbot-400M-distill",
+  { inputs: message },
+  {
+    headers: {
+      Authorization: `Bearer ${process.env.HF_TOKEN}`,
+      "Content-Type": "application/json",
+    },
+  }
+);
 
     console.log("HF RAW:", response.data);
 
