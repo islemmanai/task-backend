@@ -1,6 +1,5 @@
 const express = require("express");
 const cors = require("cors");
-const axios = require("axios");
 
 const app = express();
 
@@ -17,40 +16,59 @@ app.get("/test", (req, res) => {
   res.send("TEST OK WORKING");
 });
 
-// ================= CHATBOT (FREE) =================
-app.post("/chatbot", async (req, res) => {
-  try {
-    const { message } = req.body;
+// ================= CHATBOT =================
+app.post("/chatbot", (req, res) => {
+  const msg = req.body.message?.toLowerCase();
 
-    const response = await axios.post(
-  "https://api-inference.huggingface.co/models/microsoft/DialoGPT-medium",
-  { inputs: message },
-  {
-    headers: {
-      Authorization: `Bearer ${process.env.HF_TOKEN}`
-    }
+  let reply = "Je ne comprends pas votre demande.";
+
+  // ===== SALUTATIONS =====
+  if (
+    msg.includes("bonjour") ||
+    msg.includes("salut") ||
+    msg.includes("hello")
+  ) {
+    reply = "Bonjour technicien 👋 Comment puis-je vous aider ?";
   }
-);
 
-    console.log("HF RESPONSE:", response.data);
-
-    const reply =
-      response.data?.generated_text ||
-      response.data?.[0]?.generated_text ||
-      "No response";
-
-    res.json({ reply });
-
-  } catch (error) {
-    console.log("HF FULL ERROR:", error.response?.data || error.message);
-
-    res.status(500).json({
-      error: "Chatbot error (HF)",
-      details: error.response?.data || error.message
-    });
+  // ===== PANNE =====
+  else if (msg.includes("panne")) {
+    reply =
+      "Vérifiez l'alimentation électrique et redémarrez l'équipement.";
   }
+
+  // ===== RÉSEAU =====
+  else if (msg.includes("réseau") || msg.includes("wifi")) {
+    reply =
+      "Vérifiez la connexion réseau, le routeur et les câbles Ethernet.";
+  }
+
+  // ===== IMPRIMANTE =====
+  else if (msg.includes("imprimante")) {
+    reply =
+      "Vérifiez le papier, les câbles USB et redémarrez l'imprimante.";
+  }
+
+  // ===== MOT DE PASSE =====
+  else if (msg.includes("mot de passe")) {
+    reply =
+      "Demandez à l'administrateur de réinitialiser le mot de passe.";
+  }
+
+  // ===== SERVEUR =====
+  else if (msg.includes("serveur")) {
+    reply =
+      "Vérifiez les logs serveur et assurez-vous que le service est actif.";
+  }
+
+  // ===== DEFAULT =====
+  else {
+    reply =
+      "Votre demande a été analysée par l'assistant technique.";
+  }
+
+  res.json({ reply });
 });
-
 
 // ================= SERVER =================
 const PORT = process.env.PORT || 10000;
