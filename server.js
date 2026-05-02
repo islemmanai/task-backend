@@ -27,7 +27,7 @@ app.post("/chatbot", async (req, res) => {
     }
 
     const response = await axios.post(
-      "https://api-inference.huggingface.co/models/microsoft/DialoGPT-medium",
+      "https://api-inference.huggingface.co/models/facebook/blenderbot-400M-distill",
       {
         inputs: message,
       },
@@ -38,16 +38,23 @@ app.post("/chatbot", async (req, res) => {
       }
     );
 
+    console.log("HF RAW:", response.data);
+
     const reply =
-      response.data.generated_text ||
-      response.data[0]?.generated_text ||
+      response.data?.[0]?.generated_text ||
+      response.data?.generated_text ||
+      response.data?.conversation?.generated_responses?.[0] ||
       "No response";
 
     res.json({ reply });
 
   } catch (error) {
-    console.log("HF ERROR:", error.message);
-    res.status(500).json({ error: "Chatbot error (HF)" });
+    console.log("FULL ERROR:", error.response?.data || error.message);
+
+    res.status(500).json({
+      error: "Chatbot error (HF)",
+      details: error.response?.data || error.message,
+    });
   }
 });
 
